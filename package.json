@@ -1,0 +1,28 @@
+{
+  "name": "umg-contracts",
+  "version": "1.0.0",
+  "description": "Contracts for the UMG NFT's project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rckrich/UMG_Contracts.git"
+  },
+  "keywords": [],
+  "author": "JavierSerranoRCKGames",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/rckrich/UMG_Contracts/issues"
+  },
+  "homepage": "https://github.com/rckrich/UMG_Contracts#readme",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "ethers": "^5.5.4",
+    "hardhat": "^2.9.1"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0"
+  }
+}
