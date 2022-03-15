@@ -22,8 +22,9 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
     uint256 public mintPrice = 0.05 ether;
     uint256 public tokensMinted;
 	uint256 public teamTokensMinted;
-
-    bool public isMintEnabled;
+	
+	bool public contractPaused = false;
+    bool public isMintEnabled = false;
 
     mapping(address => uint256) public mintedWallets;
 
@@ -33,6 +34,14 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 
     // ======================================================== Owner Functions
 
+	function circuitBreaker() public onlyOwner { // onlyOwner can call
+		if (contractPaused == false) { 
+			contractPaused = true; 
+		}else{ 
+			contractPaused = false; 
+		}
+	}
+
     function toggleIsMintEnabled() external onlyOwner{
         isMintEnabled = !isMintEnabled;
     }
@@ -41,7 +50,8 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 	function claimReservedTokens(address to, uint256[] memory tokensId) 
 		external 
 		onlyOwner 
-		ensureAvailabilityFor(tokensId.length) 
+		ensureAvailabilityFor(tokensId.length)
+		checkIfPaused()
 	{
 		require(isMintEnabled, 'minting not enabled');
 		require(tokensId.length + mintedWallets[to] <= MAX_MINTS_PER_WALLET, 'Exceeds number of earned Tokens');
@@ -58,7 +68,11 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
     function disbursePayments(
 		address[] memory payees_,
 		uint256[] memory amounts_
-	) external onlyOwner {
+	) 
+		external
+	 	onlyOwner 
+		checkIfPaused()
+	{
 		require(
 			payees_.length == amounts_.length,
 			'Payees and amounts length mismatch'
@@ -80,6 +94,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		payable
 		ensureAvailabilityFor(count)
 		validateEthPayment(count)
+		checkIfPaused()
 	{
         require(isMintEnabled, 'minting not enabled');
         require(count > 0, 'num is 0 or below');
@@ -111,6 +126,11 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 			mintPrice * count == msg.value,
 			'Ether value sent is not correct'
 		);
+		_;
+	}
+
+	modifier checkIfPaused() {
+		require(contractPaused == false);
 		_;
 	}
 
