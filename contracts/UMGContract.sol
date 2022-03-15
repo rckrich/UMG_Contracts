@@ -12,9 +12,9 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
     /*
     * Private Variables
     */
-    uint256 private constant NUMBER_OF_RESERVED_UNICORNS = 2;
-    uint256 private constant MAX_SUPPLY = 10;
-	uint256 private constant MAX_MINTS_PER_WALLET = 2;
+    uint256 private constant NUMBER_OF_RESERVED_UNICORNS = 20;
+    uint256 private constant MAX_SUPPLY = 100;
+	uint256 private constant MAX_MINTS_PER_WALLET = 10;
 
 	/*
 	 * Public Variables
