@@ -20,7 +20,8 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 	 * Public Variables
 	 */
     uint256 public mintPrice = 0.05 ether;
-    uint256 public totalSupply;
+    uint256 public tokensMinted;
+	uint256 public teamTokensMinted;
 
     bool public isMintEnabled;
 
@@ -37,16 +38,20 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
     }
 
 	//CHECK THIS FUNCTION!!!
-	function claimTeamTokens(address to, uint256 count) 
+	function claimReservedTokens(address to, uint256[] memory tokensId) 
 		external 
 		onlyOwner 
-		ensureAvailabilityFor(count) 
+		ensureAvailabilityFor(tokensId.length) 
 	{
 		require(isMintEnabled, 'minting not enabled');
-		require(count + mintedWallets[to] <= MAX_MINTS_PER_WALLET, 'Exceeds number of earned Tokens');
-		mintedWallets[to] += count;
-		for (uint256 i; i < count; i++) {
-			_mintRandomId(to);
+		require(tokensId.length + mintedWallets[to] <= MAX_MINTS_PER_WALLET, 'Exceeds number of earned Tokens');
+		require(NUMBER_OF_RESERVED_UNICORNS > teamTokensMinted, 'team tokenssold out');
+        require(NUMBER_OF_RESERVED_UNICORNS >= teamTokensMinted + tokensId.length, 'exceeds reserved maximum supply');
+		mintedWallets[to] += tokensId.length;
+		teamTokensMinted += tokensId.length;
+		for (uint256 i; i < tokensId.length; i++) {
+			uint256 tokenId = tokensId[i];
+			_safeMint(to, tokenId);
 		}
 	}
 
@@ -79,12 +84,12 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
         require(isMintEnabled, 'minting not enabled');
         require(count > 0, 'num is 0 or below');
         require(mintedWallets[msg.sender] + count <= MAX_MINTS_PER_WALLET, 'exceeds max per wallet');
-        require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS > totalSupply, 'sold out');
-        require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS >= totalSupply + count, 'exceeds maximum supply');
+        require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS > tokensMinted, 'sold out');
+        require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS >= tokensMinted + count, 'exceeds maximum supply');
         require(count <=  MAX_MINTS_PER_WALLET, 'You only can mint a maximum of 10');
 
         mintedWallets[msg.sender] += count;
-        totalSupply += count;
+        tokensMinted += count;
 
         for(uint256 i; i < count; i++){
 		    _mintRandomId(msg.sender);
