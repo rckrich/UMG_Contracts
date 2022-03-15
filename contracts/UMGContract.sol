@@ -36,6 +36,20 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
         isMintEnabled = !isMintEnabled;
     }
 
+	//CHECK THIS FUNCTION!!!
+	function claimTeamTokens(address to, uint256 count) 
+		external 
+		onlyOwner 
+		ensureAvailabilityFor(count) 
+	{
+		require(isMintEnabled, 'minting not enabled');
+		require(count + mintedWallets[to] <= MAX_MINTS_PER_WALLET, 'Exceeds number of earned Tokens');
+		mintedWallets[to] += count;
+		for (uint256 i; i < count; i++) {
+			_mintRandomId(to);
+		}
+	}
+
     function disbursePayments(
 		address[] memory payees_,
 		uint256[] memory amounts_
