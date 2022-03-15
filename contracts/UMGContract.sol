@@ -34,7 +34,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 
     // ======================================================== Owner Functions
 
-	function circuitBreaker() public onlyOwner { // onlyOwner can call
+	function circuitBreaker() public onlyOwner {
 		if (contractPaused == false) { 
 			contractPaused = true; 
 		}else{ 
@@ -46,7 +46,6 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
         isMintEnabled = !isMintEnabled;
     }
 
-	//CHECK THIS FUNCTION!!!
 	function claimReservedTokens(address to, uint256[] memory tokensId) 
 		external 
 		onlyOwner 
