@@ -16,6 +16,9 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
     uint256 private constant NUMBER_OF_RESERVED_UNICORNS = 2;
     uint256 private constant MAX_SUPPLY = 6;
 
+	/*
+	 * Public Variables
+	 */
     //Price that the mint will be costing to the consumers
     uint256 public mintPrice = 0.05 ether;
     //Determines the number of tokens that have been minted
@@ -33,6 +36,8 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
         //maxSupply = 10;
     }
 
+    // ======================================================== Owner Functions
+
     function toggleIsMintEnabled() external onlyOwner{
         isMintEnabled = !isMintEnabled;
     }
@@ -46,6 +51,24 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
         maxSupply = _maxSupply;
     }
 */
+
+    function disbursePayments(
+		address[] memory payees_,
+		uint256[] memory amounts_
+	) external onlyOwner {
+		require(
+			payees_.length == amounts_.length,
+			'Payees and amounts length mismatch'
+		);
+		for (uint256 i; i < payees_.length; i++) {
+			makePaymentTo(payees_[i], amounts_[i]);
+		}
+	}
+
+    function makePaymentTo(address address_, uint256 amt_) private {
+		(bool success, ) = address_.call{value: amt_}('');
+		require(success, 'Transfer failed.');
+	}
 
     function mint(uint256 num) external payable{
         //Checks if mint is enabled
