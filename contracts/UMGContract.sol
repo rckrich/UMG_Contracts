@@ -173,7 +173,6 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		view
 		returns (bool)
 	{
-		// address signer = digest.recover(signature);
 		address signer = ecrecover(digest, coupon.v, coupon.r, coupon.s);
 		require(signer != address(0), 'ECDSA: invalid signature'); // Added check for zero address
 		return signer == _adminSigner;
