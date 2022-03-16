@@ -16,15 +16,26 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
     uint256 private constant MAX_SUPPLY = 100;
 	uint256 private constant MAX_MINTS_PER_WALLET = 10;
 
+	enum SalePhase {
+		Locked,
+		PreSale,
+		PublicSale
+	}
+
 	/*
 	 * Public Variables
 	 */
     uint256 public mintPrice = 0.05 ether;
     uint256 public tokensMinted;
-	uint256 public teamTokensMinted;
+	uint256 public reservedTokensMinted;
+	uint256 public whiteListCounter;
+
+	SalePhase public phase = SalePhase.Locked;
 	
 	bool public contractPaused = false;
     bool public isMintEnabled = false;
+
+	address[] public whiteList;
 
     mapping(address => uint256) public mintedWallets;
 
@@ -42,9 +53,28 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		}
 	}
 
+	function setMintPrice(uint256 _mintPrice)
+		external
+		onlyOwner
+		checkIfPaused()
+	{
+		mintPrice = _mintPrice;
+	}
+
     function toggleIsMintEnabled() external onlyOwner{
         isMintEnabled = !isMintEnabled;
     }
+
+	function addAddresToWhiteList(address[] memory _whiteList)
+		external
+		onlyOwner
+		checkIfPaused()
+	{
+		for (uint256 i; i < _whiteList.length; i++) {
+			whiteList[whiteListCounter] = _whiteList[i];
+			whiteListCounter++;
+		}
+	}
 
 	function claimReservedTokens(address to, uint256[] memory tokensId) 
 		external 
@@ -52,14 +82,17 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		ensureAvailabilityFor(tokensId.length)
 		checkIfPaused()
 	{
-		require(isMintEnabled, 'minting not enabled');
+		require(isMintEnabled, 'Minting not enabled');
 		require(tokensId.length + mintedWallets[to] <= MAX_MINTS_PER_WALLET, 'Exceeds number of earned Tokens');
-		require(NUMBER_OF_RESERVED_UNICORNS > teamTokensMinted, 'team tokenssold out');
-        require(NUMBER_OF_RESERVED_UNICORNS >= teamTokensMinted + tokensId.length, 'exceeds reserved maximum supply');
+		require(NUMBER_OF_RESERVED_UNICORNS > reservedTokensMinted, 'Reserved tokens sold out');
+        require(NUMBER_OF_RESERVED_UNICORNS >= reservedTokensMinted + tokensId.length, 'Exceeds reserved maximum supply');
+
 		mintedWallets[to] += tokensId.length;
-		teamTokensMinted += tokensId.length;
+		reservedTokensMinted += tokensId.length;
+		
 		for (uint256 i; i < tokensId.length; i++) {
 			uint256 tokenId = tokensId[i];
+			assert(tokenId <= NUMBER_OF_RESERVED_UNICORNS);
 			_safeMint(to, tokenId);
 		}
 	}
@@ -88,6 +121,30 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 
 	// ======================================================== External Functions
 
+	function whiteListMint(uint256 count) 
+		external 
+		payable
+		ensureAvailabilityFor(count)
+		validateEthPayment(count)
+		checkIfPaused()
+	{
+		require(phase == SalePhase.PreSale, 'Not presale');
+        require(isMintEnabled, 'minting not enabled');
+        require(count > 0, 'num is 0 or below');
+        require(mintedWallets[msg.sender] + count <= MAX_MINTS_PER_WALLET, 'exceeds max per wallet');
+        require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS > tokensMinted, 'sold out');
+        require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS >= tokensMinted + count, 'exceeds maximum supply');
+        require(count <=  MAX_MINTS_PER_WALLET, 'You only can mint a maximum of 10');
+		require(_searchInWhiteList(msg.sender), 'Address not in white list');
+
+        mintedWallets[msg.sender] += count;
+        tokensMinted += count;
+
+        for(uint256 i; i < count; i++){
+		    _mintRandomId(msg.sender);
+        }
+    }
+
     function mint(uint256 count) 
 		external 
 		payable
@@ -95,6 +152,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		validateEthPayment(count)
 		checkIfPaused()
 	{
+		require(phase == SalePhase.PublicSale, "Not public sale");
         require(isMintEnabled, 'minting not enabled');
         require(count > 0, 'num is 0 or below');
         require(mintedWallets[msg.sender] + count <= MAX_MINTS_PER_WALLET, 'exceeds max per wallet');
@@ -117,6 +175,16 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
         assert(tokenId > NUMBER_OF_RESERVED_UNICORNS && tokenId <= MAX_SUPPLY);
         _safeMint(to, tokenId);
     }
+
+	function _searchInWhiteList(address to) private returns(bool) {
+		
+		for (uint256 i; i < whiteList.length; i++) {
+			if(whiteList[i] == to)
+			return true;
+		}
+
+		return false;
+	}
 
 // ======================================================== Modifiers
 
