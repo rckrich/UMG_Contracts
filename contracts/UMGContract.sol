@@ -4,7 +4,6 @@ pragma solidity >=0.8.4;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 import "./RandomlyAssigned.sol";
 
 contract UMGContract is ERC721, Ownable, RandomlyAssigned {
@@ -129,11 +128,11 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		checkIfPaused()
 	{
 		require(phase == SalePhase.PreSale, 'Not presale');
-        require(isMintEnabled, 'minting not enabled');
-        require(count > 0, 'num is 0 or below');
-        require(mintedWallets[msg.sender] + count <= MAX_MINTS_PER_WALLET, 'exceeds max per wallet');
-        require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS > tokensMinted, 'sold out');
-        require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS >= tokensMinted + count, 'exceeds maximum supply');
+        require(isMintEnabled, 'Minting not enabled');
+        require(count > 0, 'Count is 0 or below');
+        require(mintedWallets[msg.sender] + count <= MAX_MINTS_PER_WALLET, 'Exceeds max per wallet');
+        require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS > tokensMinted, 'Sold out');
+        require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS >= tokensMinted + count, 'Exceeds maximum supply');
         require(count <=  MAX_MINTS_PER_WALLET, 'You only can mint a maximum of 10');
 		require(_searchInWhiteList(msg.sender), 'Address not in white list');
 
@@ -153,11 +152,11 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		checkIfPaused()
 	{
 		require(phase == SalePhase.PublicSale, "Not public sale");
-        require(isMintEnabled, 'minting not enabled');
-        require(count > 0, 'num is 0 or below');
-        require(mintedWallets[msg.sender] + count <= MAX_MINTS_PER_WALLET, 'exceeds max per wallet');
-        require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS > tokensMinted, 'sold out');
-        require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS >= tokensMinted + count, 'exceeds maximum supply');
+        require(isMintEnabled, 'Minting not enabled');
+        require(count > 0, 'Count is 0 or below');
+        require(mintedWallets[msg.sender] + count <= MAX_MINTS_PER_WALLET, 'Exceeds max per wallet');
+        require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS > tokensMinted, 'Sold out');
+        require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS >= tokensMinted + count, 'Exceeds maximum supply');
         require(count <=  MAX_MINTS_PER_WALLET, 'You only can mint a maximum of 10');
 
         mintedWallets[msg.sender] += count;
@@ -176,7 +175,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
         _safeMint(to, tokenId);
     }
 
-	function _searchInWhiteList(address to) private returns(bool) {
+	function _searchInWhiteList(address to) private view returns(bool) {
 		
 		for (uint256 i; i < whiteList.length; i++) {
 			if(whiteList[i] == to)
