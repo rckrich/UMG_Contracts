@@ -15,6 +15,11 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
     uint256 private constant MAX_SUPPLY = 100;
 	uint256 private constant MAX_MINTS_PER_WALLET = 10;
 
+	struct WalletStruct {
+		uint256 _numberOfMintsByAddress;
+		bool _isInWhiteList;
+	}
+
 	enum SalePhase {
 		Locked,
 		PreSale,
@@ -34,9 +39,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 	bool public contractPaused = false;
     bool public isMintEnabled = false;
 
-	address[] public whiteList;
-
-    mapping(address => uint256) public mintedWallets;
+    mapping(address => WalletStruct) public wallets;
 
 	/*
 	 * Constructor
@@ -72,14 +75,22 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 	/// Activate or deactivate minting
 	/// @dev set the state of `isMintEnabled` variable to true or false
 	/// @notice Activate or deactivate the minting event
-    function toggleIsMintEnabled() external onlyOwner{
+    function toggleIsMintEnabled() 
+		external
+		onlyOwner
+		checkIfPaused()
+	{
         isMintEnabled = !isMintEnabled;
     }
 
 	/// Advance Phase
 	/// @dev Advance the sale phase state
 	/// @notice Advances sale phase state incrementally
-	function enterPhase(SalePhase _phase) external onlyOwner {
+	function enterPhase(SalePhase _phase) 
+		external
+		onlyOwner 
+		checkIfPaused()
+	{
 		require(uint8(_phase) != uint8(phase), 'Can only change phases');
 		phase = _phase;
 	}
@@ -93,8 +104,11 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		onlyOwner
 		checkIfPaused()
 	{
+		require(whiteListCounter < MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS, 'Can not add more addresses than avialable tokesn');
+
 		for (uint256 i; i < _addedAddressesList.length; i++) {
-			whiteList[whiteListCounter] = _addedAddressesList[i];
+			require(!_searchInWhiteList(_addedAddressesList[i]), 'Can not add a wallet that has been added');
+			wallets[_addedAddressesList[i]]._isInWhiteList = true;
 			whiteListCounter++;
 		}
 	}
@@ -114,11 +128,11 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		checkIfPaused()
 	{
 		require(isMintEnabled, 'Minting not enabled');
-		require(tokensId.length + mintedWallets[to] <= MAX_MINTS_PER_WALLET, 'Exceeds number of earned Tokens');
+		require(tokensId.length + wallets[to]._numberOfMintsByAddress <= MAX_MINTS_PER_WALLET, 'Exceeds number of earned Tokens');
 		require(NUMBER_OF_RESERVED_UNICORNS > reservedTokensMinted, 'Reserved tokens sold out');
         require(NUMBER_OF_RESERVED_UNICORNS >= reservedTokensMinted + tokensId.length, 'Exceeds reserved maximum supply');
 
-		mintedWallets[to] += tokensId.length;
+		wallets[to]._numberOfMintsByAddress += tokensId.length;
 		reservedTokensMinted += tokensId.length;
 		
 		for (uint256 i; i < tokensId.length; i++) {
@@ -172,13 +186,13 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		require(phase == SalePhase.PreSale, 'Not presale');
         require(isMintEnabled, 'Minting not enabled');
         require(count > 0, 'Count is 0 or below');
-        require(mintedWallets[msg.sender] + count <= MAX_MINTS_PER_WALLET, 'Exceeds max per wallet');
+        require(wallets[msg.sender]._numberOfMintsByAddress + count <= MAX_MINTS_PER_WALLET, 'Exceeds max per wallet');
         require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS > tokensMinted, 'Sold out');
         require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS >= tokensMinted + count, 'Exceeds maximum supply');
         require(count <=  MAX_MINTS_PER_WALLET, 'You only can mint a maximum of 10');
 		require(_searchInWhiteList(msg.sender), 'Address not in white list');
 
-        mintedWallets[msg.sender] += count;
+        wallets[msg.sender]._numberOfMintsByAddress += count;
         tokensMinted += count;
 
         for(uint256 i; i < count; i++){
@@ -200,12 +214,12 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		require(phase == SalePhase.PublicSale, "Not public sale");
         require(isMintEnabled, 'Minting not enabled');
         require(count > 0, 'Count is 0 or below');
-        require(mintedWallets[msg.sender] + count <= MAX_MINTS_PER_WALLET, 'Exceeds max per wallet');
+        require(wallets[msg.sender]._numberOfMintsByAddress + count <= MAX_MINTS_PER_WALLET, 'Exceeds max per wallet');
         require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS > tokensMinted, 'Sold out');
         require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS >= tokensMinted + count, 'Exceeds maximum supply');
         require(count <=  MAX_MINTS_PER_WALLET, 'You only can mint a maximum of 10');
 
-        mintedWallets[msg.sender] += count;
+        wallets[msg.sender]._numberOfMintsByAddress += count;
         tokensMinted += count;
 
         for(uint256 i; i < count; i++){
@@ -224,13 +238,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 
 	/// @dev internal check to ensure an address is in the white list
 	function _searchInWhiteList(address to) private view returns(bool) {
-		
-		for (uint256 i; i < whiteList.length; i++) {
-			if(whiteList[i] == to)
-			return true;
-		}
-
-		return false;
+		return wallets[to]._isInWhiteList;
 	}
 
 // ======================================================== Modifiers
@@ -249,7 +257,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 	/// Modifier to validate that the contract is not puased
 	/// @dev compares state of the variable `contractPaused` to ensure it is false
 	modifier checkIfPaused() {
-		require(contractPaused == false);
+		require(contractPaused == false, 'Contract paused');
 		_;
 	}
 
