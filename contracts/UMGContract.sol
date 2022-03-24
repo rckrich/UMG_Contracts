@@ -47,7 +47,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		PublicSale
 	}
 
-	string private _defaultUri;
+	string private _defaultURI;
 	string private _tokenBaseURI;
 
 	/*
@@ -68,8 +68,13 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 	/*
 	 * Constructor
 	 */
-    constructor(string memory uri) payable ERC721('Unicorn Motorcycle Gang', 'UNICORN') RandomlyAssigned(MAX_SUPPLY, NUMBER_OF_RESERVED_UNICORNS){
-		_defaultUri = uri;
+    constructor(string memory URI) payable ERC721('Unicorn Motorcycle Gang', 'UNICORN') RandomlyAssigned(MAX_SUPPLY, NUMBER_OF_RESERVED_UNICORNS){
+		_defaultURI = URI;
+		_tokenBaseURI = _defaultURI;
+		mintPrice = 0.05 ether;
+		phase = SalePhase.Locked;
+		contractPaused = false;
+		isMintEnabled = false;
 	}
 
     // ======================================================== Owner Functions
@@ -84,10 +89,21 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		}
 	}
 
-	/// Set the base URI for the metadata
+	/// Set the default URI for the metadata
+	/// @dev modifies the state of the `_defaultURI` variable
+	/// @param URI the URI to set as the default URI
+	function setDefaultURI(string memory URI) 
+		external 
+		onlyOwner 
+		checkIfPaused()
+	{
+		_defaultURI = URI;
+	}
+
+	/// Set the base token URI for the metadata
 	/// @dev modifies the state of the `_tokenBaseURI` variable
 	/// @param URI the URI to set as the base token URI
-	function setBaseURI(string memory URI) 
+	function setTokenBaseURI(string memory URI) 
 		external 
 		onlyOwner 
 		checkIfPaused()
@@ -279,8 +295,8 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 	// ======================================================== Overrides
 
 	/// Return the tokenURI for a given ID
-	/// @dev overrides ERC721's `tokenURI` function and returns either the `_tokenBaseURI` or a custom URI
-	/// @notice reutrns the tokenURI using the `_tokenBase` URI if the token ID hasn't been suppleid with a unique custom URI
+	/// @dev overrides ERC721's `tokenURI` function and returns either the `_tokenBaseURI` or a default URI
+	/// @notice reutrns the tokenURI using the `_default` URI if the token ID hasn't been suppleid with a unique custom URI
 	function tokenURI(uint256 tokenId)
 		public
 		view
@@ -294,8 +310,20 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 				? string(
 					abi.encodePacked(_tokenBaseURI, '/', tokenId.toString(), '.json')
 				)
-				: _defaultUri;
+				: _baseURI();
 	}
+
+	/// Returns _defaultURI as the base URI
+	/// @dev overrides ERC721's `_baseURI` function and returns default URI as the base URI
+	/// @notice reutrns the tokenURI using the `_tokenBase` URI if the token ID hasn't been suppleid with a unique custom URI
+	function _baseURI() 
+		internal 
+		view 
+		override(ERC721) 
+		returns (string memory) 
+	{
+        return _defaultURI;
+    }
 
 // ======================================================== Modifiers
 
