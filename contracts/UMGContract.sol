@@ -1,12 +1,33 @@
 // SPDX-License-Identifier: Unlicense
 
+/*
+  __  __   _  __   ____  _____  ____    ___    _  __
+ / / / /  / |/ /  /  _/ / ___/ / __ \  / _ \  / |/ /
+/ /_/ /  /    /  _/ /  / /__  / /_/ / / , _/ /    / 
+\____/  /_/|_/  /___/  \___/  \____/ /_/|_| /_/|_/  
+                                                    
+   __  ___  ____  ______  ____    ___   _____ __  __  _____   __    ____
+  /  |/  / / __ \/_  __/ / __ \  / _ \ / ___/ \ \/ / / ___/  / /   / __/
+ / /|_/ / / /_/ / / /   / /_/ / / , _// /__    \  / / /__   / /__ / _/  
+/_/  /_/  \____/ /_/    \____/ /_/|_| \___/    /_/  \___/  /____//___/  
+                                                                        
+  _____   ___    _  __  _____
+ / ___/  / _ |  / |/ / / ___/
+/ (_ /  / __ | /    / / (_ / 
+\___/  /_/ |_|/_/|_/  \___/  
+                             
+*/
+
 pragma solidity >=0.8.4;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 import "./RandomlyAssigned.sol";
 
 contract UMGContract is ERC721, Ownable, RandomlyAssigned {
+
+	using Strings for uint256;
 
     /*
     * Private Variables
@@ -26,6 +47,9 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		PublicSale
 	}
 
+	string private _defaultUri;
+	string private _tokenBaseURI;
+
 	/*
 	 * Public Variables
 	 */
@@ -44,8 +68,8 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 	/*
 	 * Constructor
 	 */
-    constructor() payable ERC721('Unicorn Motorcycle Gang', 'UNICORN') RandomlyAssigned(MAX_SUPPLY, NUMBER_OF_RESERVED_UNICORNS){
-
+    constructor(string memory uri) payable ERC721('Unicorn Motorcycle Gang', 'UNICORN') RandomlyAssigned(MAX_SUPPLY, NUMBER_OF_RESERVED_UNICORNS){
+		_defaultUri = uri;
 	}
 
     // ======================================================== Owner Functions
@@ -58,6 +82,17 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		}else{ 
 			contractPaused = false; 
 		}
+	}
+
+	/// Set the base URI for the metadata
+	/// @dev modifies the state of the `_tokenBaseURI` variable
+	/// @param URI the URI to set as the base token URI
+	function setBaseURI(string memory URI) 
+		external 
+		onlyOwner 
+		checkIfPaused()
+	{
+		_tokenBaseURI = URI;
 	}
 
 	// Adjust the mint price
@@ -239,6 +274,27 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 	/// @dev internal check to ensure an address is in the white list
 	function _searchInWhiteList(address to) private view returns(bool) {
 		return wallets[to]._isInWhiteList;
+	}
+
+	// ======================================================== Overrides
+
+	/// Return the tokenURI for a given ID
+	/// @dev overrides ERC721's `tokenURI` function and returns either the `_tokenBaseURI` or a custom URI
+	/// @notice reutrns the tokenURI using the `_tokenBase` URI if the token ID hasn't been suppleid with a unique custom URI
+	function tokenURI(uint256 tokenId)
+		public
+		view
+		override(ERC721)
+		returns (string memory)
+	{
+		require(_exists(tokenId), 'Cannot query non-existent token');
+
+		return
+			bytes(_tokenBaseURI).length > 0
+				? string(
+					abi.encodePacked(_tokenBaseURI, '/', tokenId.toString(), '.json')
+				)
+				: _defaultUri;
 	}
 
 // ======================================================== Modifiers
