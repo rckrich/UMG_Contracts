@@ -70,7 +70,6 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 	 */
     constructor(string memory URI) payable ERC721('Unicorn Motorcycle Gang', 'UNICORN') RandomlyAssigned(MAX_SUPPLY, NUMBER_OF_RESERVED_UNICORNS){
 		_defaultURI = URI;
-		_tokenBaseURI = _defaultURI;
 		mintPrice = 0.05 ether;
 		phase = SalePhase.Locked;
 		contractPaused = false;
@@ -308,7 +307,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		return
 			bytes(_tokenBaseURI).length > 0
 				? string(
-					abi.encodePacked(_tokenBaseURI, '/', tokenId.toString(), '.json')
+					abi.encodePacked(_tokenBaseURI, '/', tokenId.toString())
 				)
 				: _baseURI();
 	}
