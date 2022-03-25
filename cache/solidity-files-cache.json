@@ -109,8 +109,8 @@
       ]
     },
     "/Users/josejavierserranosolis/Documents/GitHub/UMG_Contracts/contracts/UMGContract.sol": {
-      "lastModificationDate": 1647557069032,
-      "contentHash": "75b20af76ef3f279f214f8289544163b",
+      "lastModificationDate": 1648165961904,
+      "contentHash": "055b6e5244d3afcff1f0c4d6975d22fe",
       "sourceName": "contracts/UMGContract.sol",
       "solcConfig": {
         "version": "0.8.4",
@@ -138,6 +138,7 @@
       "imports": [
         "@openzeppelin/contracts/token/ERC721/ERC721.sol",
         "@openzeppelin/contracts/access/Ownable.sol",
+        "@openzeppelin/contracts/utils/Strings.sol",
         "./RandomlyAssigned.sol"
       ],
       "versionPragmas": [
