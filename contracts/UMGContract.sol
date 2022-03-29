@@ -52,6 +52,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 
 	string private _defaultURI;
 	string private _tokenBaseURI;
+	string private baseExtension = ".json";
 
 	Counters.Counter private supply;
 
@@ -317,7 +318,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		return
 			bytes(_tokenBaseURI).length > 0
 				? string(
-					abi.encodePacked(_tokenBaseURI, '/', tokenId.toString())
+					abi.encodePacked(_tokenBaseURI, '/', tokenId.toString(), baseExtension)
 				)
 				: _baseURI();
 	}
