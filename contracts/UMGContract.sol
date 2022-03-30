@@ -73,12 +73,18 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 	/*
 	 * Constructor
 	 */
-    constructor(string memory URI) payable ERC721('Unicorn Motorcycle Gang', 'UNICORN') RandomlyAssigned(MAX_SUPPLY, NUMBER_OF_RESERVED_UNICORNS){
+    constructor(string memory URI) payable ERC721('TEST Unicorn Motorcycle Gang', 'TEST_UNICORN') RandomlyAssigned(MAX_SUPPLY, NUMBER_OF_RESERVED_UNICORNS){
 		_defaultURI = URI;
+		_tokenBaseURI = _defaultURI;
 		mintPrice = 0.05 ether;
 		phase = SalePhase.Locked;
 		contractPaused = false;
 		isMintEnabled = false;
+		//TEST
+		phase = SalePhase.PublicSale;
+		contractPaused = false;
+		isMintEnabled = true;
+		//END TEST
 	}
 
     // ======================================================== Owner Functions
@@ -254,7 +260,6 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		require(_searchInWhiteList(msg.sender), 'Address not in white list');
 
         wallets[msg.sender]._numberOfMintsByAddress += count;
-        supply.increment();
 
         for(uint256 i; i < count; i++){
 		    _mintRandomId(msg.sender);
@@ -281,7 +286,6 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
         require(count <=  MAX_MINTS_PER_WALLET, 'You only can mint a maximum of 10');
 
         wallets[msg.sender]._numberOfMintsByAddress += count;
-        supply.increment();
 
         for(uint256 i; i < count; i++){
 		    _mintRandomId(msg.sender);
@@ -292,6 +296,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 
 	/// @dev internal check to ensure a ID outside of the collection, doesn't get minted
 	function _mintRandomId(address to) private {
+		supply.increment();
         uint256 tokenId = nextToken();
         assert(tokenId > NUMBER_OF_RESERVED_UNICORNS && tokenId <= MAX_SUPPLY);
         _safeMint(to, tokenId);
