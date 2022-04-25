@@ -37,7 +37,6 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
     */
     uint256 private constant NUMBER_OF_RESERVED_UNICORNS = 20;
     uint256 private constant MAX_SUPPLY = 100;
-	uint256 private constant MAX_MINTS_PER_WALLET = 10;
 
 	struct WalletStruct {
 		uint256 _numberOfMintsByAddress;
@@ -53,6 +52,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 	string private _defaultURI;
 	string private _tokenBaseURI;
 	string private baseExtension = ".json";
+	uint256 private _maxMintsPerWallet = 10;
 
 	Counters.Counter private supply;
 
@@ -80,6 +80,11 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		phase = SalePhase.Locked;
 		contractPaused = false;
 		isMintEnabled = false;
+		//TEST
+		phase = SalePhase.PublicSale;
+		contractPaused = false;
+		isMintEnabled = true;
+		//END TEST
 	}
 
     // ======================================================== Owner Functions
@@ -114,6 +119,18 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		checkIfPaused()
 	{
 		_tokenBaseURI = URI;
+	}
+
+	// Adjust max mints per wallet
+	/// @dev modifies the state of the `_maxMintsPerWallet` variable
+	/// @notice sets the max mints for wallets
+	/// @param _newMaxMints The new max minst per wallet
+	function adjustMaxMintsPerWallet(uint256 _newMaxMints)
+		external
+		onlyOwner
+		checkIfPaused()
+	{
+		_newMaxMints < 0 ? _maxMintsPerWallet = 10 : _maxMintsPerWallet = _newMaxMints;
 	}
 
 	// Adjust the mint price
@@ -184,7 +201,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		checkIfPaused()
 	{
 		require(isMintEnabled, 'Minting not enabled');
-		require(tokensId.length + wallets[to]._numberOfMintsByAddress <= MAX_MINTS_PER_WALLET, 'Exceeds number of earned Tokens');
+		require(tokensId.length + wallets[to]._numberOfMintsByAddress <= _maxMintsPerWallet, 'Exceeds number of earned Tokens');
 		require(NUMBER_OF_RESERVED_UNICORNS > reservedTokensMinted, 'Reserved tokens sold out');
         require(NUMBER_OF_RESERVED_UNICORNS >= reservedTokensMinted + tokensId.length, 'Exceeds reserved maximum supply');
 
@@ -248,10 +265,10 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		require(phase == SalePhase.PreSale, 'Not presale');
         require(isMintEnabled, 'Minting not enabled');
         require(count > 0, 'Count is 0 or below');
-        require(wallets[msg.sender]._numberOfMintsByAddress + count <= MAX_MINTS_PER_WALLET, 'Exceeds max per wallet');
+        require(wallets[msg.sender]._numberOfMintsByAddress + count <= _maxMintsPerWallet, 'Exceeds max per wallet');
         require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS > supply.current(), 'Sold out');
         require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS >= supply.current() + count, 'Exceeds maximum supply');
-        require(count <=  MAX_MINTS_PER_WALLET, 'You only can mint a maximum of 10');
+        require(count <=  _maxMintsPerWallet, 'You only can mint a maximum of 10');
 		require(_searchInWhiteList(msg.sender), 'Address not in white list');
 
         wallets[msg.sender]._numberOfMintsByAddress += count;
@@ -262,7 +279,7 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
     }
 
 	/// Public minting open to all
-	/// @dev mints tokens during public sale, limited by `MAX_MINTS_PER_WALLET`
+	/// @dev mints tokens during public sale, limited by `_maxMintsPerWallet`
 	/// @notice mints tokens with randomized IDs to the sender's address
 	/// @param count number of tokens to mint in transaction
     function mint(uint256 count) 
@@ -275,10 +292,10 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		require(phase == SalePhase.PublicSale, "Not public sale");
         require(isMintEnabled, 'Minting not enabled');
         require(count > 0, 'Count is 0 or below');
-        require(wallets[msg.sender]._numberOfMintsByAddress + count <= MAX_MINTS_PER_WALLET, 'Exceeds max per wallet');
+        require(wallets[msg.sender]._numberOfMintsByAddress + count <= _maxMintsPerWallet, 'Exceeds max per wallet');
         require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS > supply.current(), 'Sold out');
         require(MAX_SUPPLY - NUMBER_OF_RESERVED_UNICORNS >= supply.current() + count, 'Exceeds maximum supply');
-        require(count <=  MAX_MINTS_PER_WALLET, 'You only can mint a maximum of 10');
+        require(count <=  _maxMintsPerWallet, 'You only can mint a maximum of 10');
 
         wallets[msg.sender]._numberOfMintsByAddress += count;
 
