@@ -80,11 +80,6 @@ contract UMGContract is ERC721, Ownable, RandomlyAssigned {
 		phase = SalePhase.Locked;
 		contractPaused = false;
 		isMintEnabled = false;
-		//TEST
-		phase = SalePhase.PublicSale;
-		contractPaused = false;
-		isMintEnabled = true;
-		//END TEST
 	}
 
     // ======================================================== Owner Functions
